@@ -1,4 +1,4 @@
-.PHONY: help install test test-features clean
+.PHONY: help install test test-features clean demo cli
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -13,6 +13,12 @@ test:  ## Run all tests
 
 test-features:  ## Run feature tests only
 	.venv/bin/pytest tests/features/ -v -m acceptance
+
+demo:  ## Run CLI demo
+	.venv/bin/python -m drivers.cli.commands demo
+
+cli:  ## Run CLI (use: make cli ARGS="generate --help")
+	.venv/bin/python -m drivers.cli.commands $(ARGS)
 
 clean:  ## Clean generated files
 	rm -rf .pytest_cache
