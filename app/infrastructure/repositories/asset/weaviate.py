@@ -38,8 +38,7 @@ class WeaviateAssetRepository:
         self.client.collections.create(
             name=COLLECTION_NAME,
             description="Seed assets and generated campaign creatives",
-            vector_config=Configure.NamedVectors.multi2vec_clip(
-                name="clip_vector",
+            vectorizer_config=Configure.Vectorizer.multi2vec_clip(
                 image_fields=["image"],
                 text_fields=[
                     "message",

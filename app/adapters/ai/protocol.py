@@ -13,13 +13,14 @@ from typing import Protocol, Dict, List
 class IAIAdapter(Protocol):
     """Interface for AI adapters (image gen, localization, brand analysis)."""
 
-    def generate_image(self, prompt: str, aspect_ratio: str) -> bytes:
+    def generate_image(self, prompt: str, aspect_ratio: str, seed_image: bytes = None) -> bytes:
         """
-        Generate hero image from text prompt.
+        Generate hero image from text prompt, optionally based on a seed image.
 
         Args:
             prompt: Image generation prompt (product + brand guidelines)
             aspect_ratio: "1:1", "9:16", or "16:9"
+            seed_image: Optional seed image bytes to base generation on
 
         Returns:
             Image bytes (PNG format)

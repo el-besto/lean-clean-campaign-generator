@@ -251,29 +251,66 @@ if st.button("🚀 Generate Campaign", type="primary", use_container_width=True)
             created_at=datetime.now(),
         )
 
-        # Generate campaign
-        with st.spinner("Generating campaign... This may take a moment."):
-            try:
-                # Create orchestrator with selected adapters
-                ai_adapter = create_ai_adapter(use_real=use_real)
-                storage_adapter = create_storage_adapter(use_real=use_real)
-                brand_repo = create_brand_repository(use_real=use_real)
-                asset_repo = create_asset_repository(use_real=use_real)
+        # Generate campaign with real-time progress tracking
+        try:
+            # Calculate total assets
+            total_assets = len(products) * len(locales) * len(aspects)
 
-                generate_uc = GenerateCampaignUC(ai_adapter, storage_adapter, asset_repo)
-                validate_uc = ValidateCampaignUC()
-                orchestrator = CampaignOrchestrator(generate_uc, validate_uc, brand_repo)
+            # Create progress UI
+            st.write(f"**Generating {total_assets} assets...**")
+            progress_bar = st.progress(0)
+            status_text = st.empty()
 
-                result = orchestrator.generate_campaign(brief)
+            # Progress callback for real-time updates
+            def update_progress(message: str, current: int, total: int):
+                """Update Streamlit UI with progress."""
+                progress = current / total if total > 0 else 0
+                progress_bar.progress(progress)
 
-                # Store in session state
-                st.session_state["result"] = result
-                st.session_state["use_real"] = use_real
-                st.success("✅ Campaign generated successfully!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"❌ Campaign generation failed: {e}")
-                st.exception(e)
+                if "Localizing" in message:
+                    status_text.text(f"🌐 {message}")
+                elif current == 0:
+                    status_text.text(f"🔍 {message}")
+                else:
+                    status_text.text(f"🎨 [{current}/{total}] {message}")
+                    if use_real:
+                        status_text.text(
+                            f"🤖 [{current}/{total}] {message}\n"
+                            f"⏱️  OpenAI API calls may take 10-30 seconds per image..."
+                        )
+
+            # Create orchestrator with progress callback
+            status_text.text("🔍 Loading brand information...")
+            ai_adapter = create_ai_adapter(use_real=use_real)
+            storage_adapter = create_storage_adapter(use_real=use_real)
+            brand_repo = create_brand_repository(use_real=use_real)
+            asset_repo = create_asset_repository(use_real=use_real)
+
+            generate_uc = GenerateCampaignUC(
+                ai_adapter,
+                storage_adapter,
+                asset_repo,
+                progress_callback=update_progress
+            )
+            validate_uc = ValidateCampaignUC()
+            orchestrator = CampaignOrchestrator(generate_uc, validate_uc, brand_repo)
+
+            # Run actual generation with real-time progress
+            result = orchestrator.generate_campaign(brief)
+
+            progress_bar.progress(1.0)
+            status_text.text("✅ All assets generated! Running validation...")
+
+            # Store in session state
+            st.session_state["result"] = result
+            st.session_state["use_real"] = use_real
+
+            st.success(f"✅ Generated {total_assets} assets successfully!")
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"❌ Campaign generation failed: {e}")
+            st.exception(e)
 
 st.markdown("---")
 
