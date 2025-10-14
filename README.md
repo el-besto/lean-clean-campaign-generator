@@ -62,7 +62,63 @@ make demo
 **Option 2: Streamlit UI**
 ```bash
 make ui
-# Opens browser at http://localhost:8501
+# Opens browser at http://localhost:8501 (default Streamlit port)
+```
+
+---
+
+## 🐳 Infrastructure Setup (Real Adapters)
+
+**Optional**: Use real adapters for production-quality output (OpenAI + MinIO + Weaviate).
+
+### Prerequisites
+
+- Docker + Docker Compose (or Podman)
+- OpenAI API key
+
+### Start Services
+
+```bash
+# Start Weaviate + MinIO services
+make up
+
+# Check Weaviate readiness
+make readiness
+
+# Set API key
+export OPENAI_API_KEY="sk-..."
+```
+
+### Service URLs
+
+- **Weaviate API**: http://localhost:8080
+- **MinIO Console**: http://localhost:9001 (login: minio / minio123)
+
+### Seed Brand Data
+
+```bash
+# Populate Weaviate with example brand
+.venv/bin/python tools/seed_brand.py
+```
+
+### Run with Real Adapters
+
+```bash
+# CLI with real adapters
+python -m drivers.cli.commands generate --real
+
+# Streamlit UI (toggle real adapters in sidebar)
+make ui
+```
+
+### Stop Services
+
+```bash
+# Stop services
+make down
+
+# Stop and remove volumes (fresh start)
+make clean-infra
 ```
 
 ---
@@ -91,6 +147,11 @@ python -m drivers.cli.commands generate \
   --verbose
 ```
 
+**With real adapters** (requires `make up` and `OPENAI_API_KEY`):
+```bash
+python -m drivers.cli.commands generate --real
+```
+
 **Get help**:
 ```bash
 python -m drivers.cli.commands generate --help
@@ -100,17 +161,20 @@ python -m drivers.cli.commands generate --help
 
 ```bash
 make ui
-
-## or
-source .venv/bin/activate 
-PYTHONPATH=. streamlit run drivers/ui/streamlit/app.py
+# Opens browser at http://localhost:8501
 ```
 
-Then:
-1. Configure campaign in sidebar (products, locales, aspects)
-2. Click **Generate Campaign**
-3. View generated assets with localized messages
-4. Check validation report
+**Multi-page app**:
+1. **Home**: Architecture overview and navigation
+2. **Generate Campaign**: Interactive form with fake/real adapter toggle
+3. **Gallery**: Browse and download assets from MinIO
+
+**To use real adapters in UI**:
+1. Start services: `make up`
+2. Set API key: `export OPENAI_API_KEY="sk-..."`
+3. Navigate to "Generate Campaign"
+4. Check "Use real adapters" in sidebar
+5. Generate and view images inline!
 
 ---
 
@@ -140,8 +204,9 @@ Then:
 └────────────────┬─────────────────────┘
                  ↑
 ┌──────────────────────────────────────┐
-│  Layer 1: ADAPTERS & INFRASTRUCTURE  │  FakeAIAdapter, FakeStorageAdapter
-│  External services, repositories     │  InMemoryBrandRepository
+│  Layer 1: ADAPTERS & INFRASTRUCTURE  │  Fake: FakeAIAdapter, FakeStorageAdapter
+│  External services, repositories     │  Real: OpenAIImageAdapter, MinIOStorageAdapter
+│                                      │        WeaviateBrandRepository
 └──────────────────────────────────────┘
 ```
 
@@ -241,28 +306,33 @@ make demo           # Run CLI demo
 make cli            # Run CLI (use: make cli ARGS="generate --help")
 make ui             # Run Streamlit UI
 make clean          # Clean generated files
+
+# Infrastructure (real adapters)
+make up             # Start Weaviate + MinIO services
+make down           # Stop services
+make clean-infra    # Stop services and remove volumes
+make readiness      # Check Weaviate health
+make open           # Open service UIs in browser
 ```
 
-### Adding Real Adapters
+### Adapter Modes
 
-To replace fakes with real implementations:
+**Fake Adapters** (default):
+- Fast testing mode (<100ms execution)
+- No external dependencies
+- Deterministic output
+- Use for: Tests, demos without API keys
 
-1. **Create adapter** implementing protocol:
-   ```python
-   # app/adapters/ai/openai.py
-   class OpenAIAdapter:
-       def generate_image(self, prompt: str, aspect_ratio: str) -> bytes:
-           # Call OpenAI DALL-E 3 API
-           ...
-   ```
+**Real Adapters** (production):
+- OpenAI gpt-image-1 for image generation
+- MinIO for S3-compatible blob storage
+- Weaviate for vector-based brand search
+- Use for: Production-quality output
 
-2. **Update dependency injection**:
-   ```python
-   # drivers/cli/commands.py
-   ai_adapter = OpenAIAdapter()  # Instead of FakeAIAdapter()
-   ```
-
-3. **No use case changes required** (Dependency Inversion Principle)
+**Toggle via**:
+- CLI: `--real` flag
+- UI: Checkbox in sidebar
+- Code: `create_ai_adapter(use_real=True)`
 
 ---
 
