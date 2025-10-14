@@ -1,4 +1,4 @@
-.PHONY: help install test test-features clean demo cli
+.PHONY: help install test test-features clean demo cli ui
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -19,6 +19,9 @@ demo:  ## Run CLI demo
 
 cli:  ## Run CLI (use: make cli ARGS="generate --help")
 	.venv/bin/python -m drivers.cli.commands $(ARGS)
+
+ui:  ## Run Streamlit UI
+	.venv/bin/streamlit run drivers/ui/streamlit/app.py
 
 clean:  ## Clean generated files
 	rm -rf .pytest_cache
