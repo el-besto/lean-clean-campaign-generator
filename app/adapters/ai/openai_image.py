@@ -43,10 +43,9 @@ class OpenAIImageAdapter:
             size=size,
             quality="standard",
             n=1,
-            response_format="b64_json",
         )
 
-        # Decode base64 image
+        # Decode base64 image (b64_json is returned by default)
         image_b64 = response.data[0].b64_json
         return base64.b64decode(image_b64)
 

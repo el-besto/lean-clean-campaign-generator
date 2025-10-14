@@ -1,0 +1,25 @@
+# Example Campaign Brief
+# Upload this file in the Streamlit UI to auto-populate the form
+
+brief_id: "holiday-2025"
+brand_id: "natural-suds-co"
+campaign_slogan: "Gift Wellness"
+target_region: "North America"
+target_audience: "Gift shoppers 25-45"
+
+target_locales:
+  - en-US
+  - es-US
+
+products:
+  - name: "Lavender Soap"
+    palette_words: ["calming", "purple", "natural"]
+  - name: "Citrus Shower Gel"
+    palette_words: ["vibrant", "orange", "energizing"]
+  - name: "Rose Hand Cream"
+    palette_words: ["romantic", "pink", "elegant"]
+
+aspects:
+  - "1:1"
+  - "9:16"
+  - "16:9"

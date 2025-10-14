@@ -17,6 +17,7 @@ from app.infrastructure.factories import (
     create_storage_adapter,
     create_brand_repository,
 )
+from drivers.ui.streamlit.shared import parse_brief_file
 
 st.set_page_config(page_title="Generate Campaign", page_icon="🎨", layout="wide")
 
@@ -24,6 +25,25 @@ st.header("🎨 Generate Campaign")
 
 # Sidebar: Campaign Brief Form
 st.sidebar.header("Campaign Brief")
+
+# File upload option
+st.sidebar.subheader("📁 Upload Brief (Optional)")
+brief_file = st.sidebar.file_uploader(
+    "Brief file (YAML/JSON)",
+    type=["yaml", "yml", "json"],
+    help="Upload a campaign brief file to auto-populate the form below",
+)
+
+uploaded_brief = None
+if brief_file:
+    try:
+        uploaded_brief, _ = parse_brief_file(brief_file)
+        st.sidebar.success(f"✓ Loaded: {uploaded_brief.brief_id}")
+    except Exception as e:
+        st.sidebar.error(f"Failed to parse brief: {e}")
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("✏️ Manual Entry")
 
 use_real = st.sidebar.checkbox(
     "Use real adapters",
@@ -36,14 +56,28 @@ if use_real:
 else:
     st.sidebar.info("ℹ️ Using fake adapters (testing mode)")
 
-brand_id = st.sidebar.selectbox("Brand", ["natural-suds-co"])
-campaign_slogan = st.sidebar.text_input("Campaign Slogan", value="Gift Wellness")
-target_region = st.sidebar.text_input("Target Region", value="North America")
-target_audience = st.sidebar.text_input("Target Audience", value="Gift shoppers 25-45")
+brand_id = st.sidebar.selectbox(
+    "Brand",
+    ["natural-suds-co"],
+    index=0 if not uploaded_brief else 0
+)
+campaign_slogan = st.sidebar.text_input(
+    "Campaign Slogan",
+    value=uploaded_brief.campaign_slogan if uploaded_brief else "Gift Wellness"
+)
+target_region = st.sidebar.text_input(
+    "Target Region",
+    value=uploaded_brief.target_region if uploaded_brief else "North America"
+)
+target_audience = st.sidebar.text_input(
+    "Target Audience",
+    value=uploaded_brief.target_audience if uploaded_brief else "Gift shoppers 25-45"
+)
 
 st.sidebar.subheader("Locales")
-locale_en = st.sidebar.checkbox("English (en-US)", value=True)
-locale_es = st.sidebar.checkbox("Spanish (es-US)", value=True)
+default_locales = uploaded_brief.target_locales if uploaded_brief else ["en-US", "es-US"]
+locale_en = st.sidebar.checkbox("English (en-US)", value="en-US" in default_locales)
+locale_es = st.sidebar.checkbox("Spanish (es-US)", value="es-US" in default_locales)
 locales = []
 if locale_en:
     locales.append("en-US")
@@ -51,21 +85,37 @@ if locale_es:
     locales.append("es-US")
 
 st.sidebar.subheader("Products")
-num_products = st.sidebar.number_input("Number of Products", min_value=1, max_value=5, value=2)
+default_products = uploaded_brief.products if uploaded_brief else []
+num_products = st.sidebar.number_input(
+    "Number of Products",
+    min_value=1,
+    max_value=5,
+    value=len(default_products) if default_products else 2
+)
 products = []
 for i in range(int(num_products)):
+    default_name = ""
+    if default_products and i < len(default_products):
+        default_name = default_products[i].name
+    elif i < 2:
+        default_name = ["Lavender Soap", "Citrus Shower Gel"][i]
+    else:
+        default_name = f"Product {i+1}"
+
     product_name = st.sidebar.text_input(
         f"Product {i+1} Name",
-        value=["Lavender Soap", "Citrus Shower Gel"][i] if i < 2 else f"Product {i+1}",
+        value=default_name,
         key=f"product_{i}",
     )
     if product_name:
-        products.append(Product(name=product_name, palette_words=["vibrant", "modern"]))
+        palette = default_products[i].palette_words if (default_products and i < len(default_products)) else ["vibrant", "modern"]
+        products.append(Product(name=product_name, palette_words=palette))
 
 st.sidebar.subheader("Aspect Ratios")
-aspect_1x1 = st.sidebar.checkbox("Square (1:1)", value=True)
-aspect_9x16 = st.sidebar.checkbox("Story (9:16)", value=True)
-aspect_16x9 = st.sidebar.checkbox("Landscape (16:9)", value=False)
+default_aspects = uploaded_brief.aspects if uploaded_brief else ["1:1", "9:16"]
+aspect_1x1 = st.sidebar.checkbox("Square (1:1)", value="1:1" in default_aspects)
+aspect_9x16 = st.sidebar.checkbox("Story (9:16)", value="9:16" in default_aspects)
+aspect_16x9 = st.sidebar.checkbox("Landscape (16:9)", value="16:9" in default_aspects)
 aspects = []
 if aspect_1x1:
     aspects.append("1:1")
