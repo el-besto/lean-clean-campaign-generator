@@ -4,7 +4,6 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Clean Architecture](https://img.shields.io/badge/architecture-clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-[![Tests Passing](https://img.shields.io/badge/tests-passing-brightgreen.svg)](#testing)
 
 > FDE Take-Home Exercise - Task 2: Proof-of-concept demonstrating Pragmatic Clean Architecture for multi-locale campaign generation.
 

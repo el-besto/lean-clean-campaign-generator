@@ -74,6 +74,16 @@ class WeaviateBrandRepository:
 
         # Convert Weaviate object to BrandSummary entity
         props = result.objects[0].properties
+
+        # Weaviate v4 returns datetime objects, not strings
+        created_at = props["created_at"]
+        if isinstance(created_at, str):
+            created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+
+        updated_at = props["updated_at"]
+        if isinstance(updated_at, str):
+            updated_at = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+
         return BrandSummary(
             brand_id=props["brand_id"],
             name=props["name"],
@@ -86,8 +96,8 @@ class WeaviateBrandRepository:
             products=props.get("products", []),
             campaign_slogans=props.get("campaign_slogans", []),
             logo_url=props.get("logo_url"),
-            created_at=datetime.fromisoformat(props["created_at"]),
-            updated_at=datetime.fromisoformat(props["updated_at"]),
+            created_at=created_at,
+            updated_at=updated_at,
         )
 
     def search_similar(self, brand: BrandSummary, limit: int = 5) -> List[BrandSummary]:
@@ -113,6 +123,16 @@ class WeaviateBrandRepository:
         brands = []
         for obj in result.objects:
             props = obj.properties
+
+            # Weaviate v4 returns datetime objects, not strings
+            created_at = props["created_at"]
+            if isinstance(created_at, str):
+                created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+
+            updated_at = props["updated_at"]
+            if isinstance(updated_at, str):
+                updated_at = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+
             brands.append(
                 BrandSummary(
                     brand_id=props["brand_id"],
@@ -126,8 +146,8 @@ class WeaviateBrandRepository:
                     products=props.get("products", []),
                     campaign_slogans=props.get("campaign_slogans", []),
                     logo_url=props.get("logo_url"),
-                    created_at=datetime.fromisoformat(props["created_at"]),
-                    updated_at=datetime.fromisoformat(props["updated_at"]),
+                    created_at=created_at,
+                    updated_at=updated_at,
                 )
             )
 
@@ -152,8 +172,8 @@ class WeaviateBrandRepository:
             "products": brand.products,
             "campaign_slogans": brand.campaign_slogans,
             "logo_url": brand.logo_url or "",
-            "created_at": brand.created_at.isoformat(),
-            "updated_at": brand.updated_at.isoformat(),
+            "created_at": brand.created_at.isoformat() + "Z",  # RFC3339 format with UTC
+            "updated_at": brand.updated_at.isoformat() + "Z",  # RFC3339 format with UTC
         }
         self.collection.data.insert(data)
 

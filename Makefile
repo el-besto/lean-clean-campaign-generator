@@ -53,7 +53,7 @@ clean-infra:  ## Stop services and remove volumes (fresh start)
 
 readiness:  ## Check Weaviate readiness
 	@echo "Checking Weaviate readiness..."
-	@curl -s http://$(WEAVIATE_HOST):$(WEAVIATE_HTTP_PORT)/v1/.well-known/ready | grep -q '"status":"healthy"' && echo "✅ Weaviate ready" || echo "❌ Weaviate not ready"
+	@curl -s -o /dev/null -w "%{http_code}" http://$(WEAVIATE_HOST):$(WEAVIATE_HTTP_PORT)/v1/.well-known/ready | grep -q "200" && echo "✅ Weaviate ready (HTTP 200)" || echo "❌ Weaviate not ready"
 
 open:  ## Open service UIs in browser
 	@open "http://$(WEAVIATE_HOST):$(WEAVIATE_HTTP_PORT)" || true
