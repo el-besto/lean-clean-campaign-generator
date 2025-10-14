@@ -39,7 +39,7 @@ This PoC generates **localized creative assets** for social ad campaigns across 
 
 ```bash
 # Clone repository
-git clone <repository-url>
+git clone https://github.com/el-besto/lean-clean-campaign-generator
 cd lean-clean-campaign-generator
 
 # Install dependencies
