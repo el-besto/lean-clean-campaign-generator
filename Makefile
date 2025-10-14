@@ -4,7 +4,7 @@ help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 install:  ## Install dependencies
-	python3 -m venv .venv
+	python3.11 -m venv .venv
 	.venv/bin/pip install --upgrade pip
 	.venv/bin/pip install -r requirements.txt
 
@@ -15,13 +15,13 @@ test-features:  ## Run feature tests only
 	.venv/bin/pytest tests/features/ -v -m acceptance
 
 demo:  ## Run CLI demo
-	PYTHONPATH=. .venv/bin/python -m drivers.cli.commands demo
+	cd "$(shell pwd)" && export PYTHONPATH=. && .venv/bin/python -m drivers.cli.commands demo
 
 cli:  ## Run CLI (use: make cli ARGS="generate --help")
-	PYTHONPATH=. .venv/bin/python -m drivers.cli.commands $(ARGS)
+	cd "$(shell pwd)" && export PYTHONPATH=. && .venv/bin/python -m drivers.cli.commands $(ARGS)
 
 ui:  ## Run Streamlit UI
-	PYTHONPATH=. .venv/bin/streamlit run drivers/ui/streamlit/app.py
+	./run_streamlit.sh
 
 clean:  ## Clean generated files
 	rm -rf .pytest_cache

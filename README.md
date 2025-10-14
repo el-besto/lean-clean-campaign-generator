@@ -100,6 +100,10 @@ python -m drivers.cli.commands generate --help
 
 ```bash
 make ui
+
+## or
+source .venv/bin/activate 
+PYTHONPATH=. streamlit run drivers/ui/streamlit/app.py
 ```
 
 Then:
