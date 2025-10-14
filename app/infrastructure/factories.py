@@ -16,6 +16,9 @@ from app.infrastructure.repositories.brand.protocol import IBrandRepository
 from app.infrastructure.repositories.brand.in_memory import InMemoryBrandRepository
 from app.infrastructure.repositories.brand.weaviate import WeaviateBrandRepository
 
+from typing import Optional
+from app.infrastructure.repositories.asset.weaviate import WeaviateAssetRepository
+
 
 def create_ai_adapter(use_real: bool = False) -> IAIAdapter:
     """
@@ -60,3 +63,18 @@ def create_brand_repository(use_real: bool = False) -> IBrandRepository:
     if use_real:
         return WeaviateBrandRepository()
     return InMemoryBrandRepository()
+
+
+def create_asset_repository(use_real: bool = False) -> Optional[WeaviateAssetRepository]:
+    """
+    Create asset repository (only real Weaviate - no fake needed for testing).
+
+    Args:
+        use_real: If True, use WeaviateAssetRepository; else return None
+
+    Returns:
+        WeaviateAssetRepository or None
+    """
+    if use_real:
+        return WeaviateAssetRepository()
+    return None  # Fake mode doesn't need asset search/reuse

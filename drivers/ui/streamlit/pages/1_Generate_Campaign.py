@@ -16,6 +16,7 @@ from app.infrastructure.factories import (
     create_ai_adapter,
     create_storage_adapter,
     create_brand_repository,
+    create_asset_repository,
 )
 from drivers.ui.streamlit.shared import parse_brief_file
 
@@ -148,8 +149,9 @@ if st.sidebar.button("Generate Campaign", type="primary"):
             ai_adapter = create_ai_adapter(use_real=use_real)
             storage_adapter = create_storage_adapter(use_real=use_real)
             brand_repo = create_brand_repository(use_real=use_real)
+            asset_repo = create_asset_repository(use_real=use_real)
 
-            generate_uc = GenerateCampaignUC(ai_adapter, storage_adapter)
+            generate_uc = GenerateCampaignUC(ai_adapter, storage_adapter, asset_repo)
             validate_uc = ValidateCampaignUC()
             orchestrator = CampaignOrchestrator(generate_uc, validate_uc, brand_repo)
 

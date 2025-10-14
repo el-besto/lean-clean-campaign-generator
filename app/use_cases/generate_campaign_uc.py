@@ -2,14 +2,15 @@
 Generate Campaign Use Case
 
 Business logic for campaign generation:
-1. Localize campaign slogan
-2. For each product × aspect × locale:
-   a. Generate hero image
-   b. Add text overlay
-   c. Create CreativeAsset entity
-3. Return list of assets
+1. Search Weaviate for existing similar assets (reuse if found)
+2. Localize campaign slogan
+3. For each product × aspect × locale:
+   a. Check if similar asset exists in Weaviate
+   b. If found: reuse existing asset
+   c. If not: generate hero image, add text overlay, save
+4. Return list of assets
 """
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 import hashlib
 
@@ -25,9 +26,11 @@ class GenerateCampaignUC:
         self,
         ai_adapter,
         storage_adapter,
+        asset_repository=None,
     ):
         self.ai_adapter = ai_adapter
         self.storage_adapter = storage_adapter
+        self.asset_repository = asset_repository  # Optional: Weaviate asset search
 
     def execute(
         self,
@@ -85,8 +88,29 @@ class GenerateCampaignUC:
         locale: str,
         slogan: str,
     ) -> CreativeAsset:
-        """Generate single creative asset."""
-        # Generate image prompt
+        """
+        Generate single creative asset.
+
+        Searches Weaviate for existing similar assets first.
+        If found, reuses existing asset. If not, generates new one.
+        """
+        # Step 1: Check Weaviate for existing similar assets
+        if self.asset_repository:
+            existing = self.asset_repository.find_existing(
+                product_name=product.name,
+                aspect_ratio=aspect,
+                locale=locale,
+                limit=1,
+            )
+            if existing:
+                # Reuse existing asset (update metadata)
+                reused_asset = existing[0]
+                reused_asset.brief_id = brief.brief_id
+                reused_asset.message = slogan
+                reused_asset.reused = True
+                return reused_asset
+
+        # Step 2: No existing asset found - generate new one
         prompt = self._create_prompt(brand, product, aspect)
 
         # Generate hero image
@@ -101,7 +125,7 @@ class GenerateCampaignUC:
         saved_path = self.storage_adapter.save(storage_path, final_image)
 
         # Create entity
-        return CreativeAsset(
+        asset = CreativeAsset(
             asset_id=asset_id,
             brief_id=brief.brief_id,
             brand_id=brand.brand_id,
@@ -118,6 +142,16 @@ class GenerateCampaignUC:
                 "prompt": prompt,
             },
         )
+
+        # Step 3: Index new asset in Weaviate for future reuse
+        if self.asset_repository:
+            self.asset_repository.upsert(
+                asset,
+                image_bytes=final_image,
+                tags=["generated"],
+            )
+
+        return asset
 
     def _create_prompt(self, brand: BrandSummary, product, aspect: str) -> str:
         """Create image generation prompt."""
