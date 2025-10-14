@@ -376,8 +376,20 @@ This is a proof-of-concept for educational purposes (FDE Take-Home Exercise).
 
 ## 🙏 Acknowledgments
 
+<div style="text-align: center;">
+<pre>
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  LEAN-CLEAN METHODOLOGY                ┃
+┃  ────────────────────────              ┃
+┃  Write Tests WITH Stakeholders         ┃
+┃  Validate BEFORE Building              ┃
+┃  Evolve WITHOUT Rewrites               ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>
+</div>
+
 Built with:
-- **Lean-Clean Methodology**: Pragmatic Clean Architecture principles
+- **Lean-Clean Methodology**: Pragmatic Clean Architecture principles, [read more](https://github.com/el-besto/lean-clean-methodology)
 - **Python 3.11+**: Modern Python features (dataclasses, protocols)
 - **Typer**: CLI framework
 - **Streamlit**: Web UI framework
