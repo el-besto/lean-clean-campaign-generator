@@ -13,4 +13,4 @@ cd "$SCRIPT_DIR"
 export PYTHONPATH="$SCRIPT_DIR"
 
 # Run streamlit
-exec .venv/bin/streamlit run drivers/ui/streamlit/main.py "$@"
+exec .venv/bin/streamlit run drivers/ui/streamlit/Home.py "$@"
