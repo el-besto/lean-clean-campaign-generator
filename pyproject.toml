@@ -1,0 +1,21 @@
+[project]
+name = "campaign-generator"
+version = "0.1.0"
+description = "AI-driven creative automation for social ad campaigns"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+    "typer>=0.12.0",
+    "streamlit>=1.35.0",
+    "pytest>=8.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest-cov>=5.0.0",
+    "ruff>=0.4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
