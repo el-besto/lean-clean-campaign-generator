@@ -253,21 +253,27 @@ if st.button("🚀 Generate Campaign", type="primary", use_container_width=True)
 
         # Generate campaign
         with st.spinner("Generating campaign... This may take a moment."):
-            # Create orchestrator with selected adapters
-            ai_adapter = create_ai_adapter(use_real=use_real)
-            storage_adapter = create_storage_adapter(use_real=use_real)
-            brand_repo = create_brand_repository(use_real=use_real)
-            asset_repo = create_asset_repository(use_real=use_real)
+            try:
+                # Create orchestrator with selected adapters
+                ai_adapter = create_ai_adapter(use_real=use_real)
+                storage_adapter = create_storage_adapter(use_real=use_real)
+                brand_repo = create_brand_repository(use_real=use_real)
+                asset_repo = create_asset_repository(use_real=use_real)
 
-            generate_uc = GenerateCampaignUC(ai_adapter, storage_adapter, asset_repo)
-            validate_uc = ValidateCampaignUC()
-            orchestrator = CampaignOrchestrator(generate_uc, validate_uc, brand_repo)
+                generate_uc = GenerateCampaignUC(ai_adapter, storage_adapter, asset_repo)
+                validate_uc = ValidateCampaignUC()
+                orchestrator = CampaignOrchestrator(generate_uc, validate_uc, brand_repo)
 
-            result = orchestrator.generate_campaign(brief)
+                result = orchestrator.generate_campaign(brief)
 
-        # Store in session state
-        st.session_state["result"] = result
-        st.session_state["use_real"] = use_real
+                # Store in session state
+                st.session_state["result"] = result
+                st.session_state["use_real"] = use_real
+                st.success("✅ Campaign generated successfully!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ Campaign generation failed: {e}")
+                st.exception(e)
 
 st.markdown("---")
 
