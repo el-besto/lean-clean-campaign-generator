@@ -97,6 +97,9 @@ export OPENAI_API_KEY="sk-..."
 
 ```bash
 # Populate Weaviate with example brand
+make seed
+
+# or
 .venv/bin/python tools/seed_brand.py
 ```
 
@@ -305,6 +308,7 @@ make demo           # Run CLI demo
 make cli            # Run CLI (use: make cli ARGS="generate --help")
 make ui             # Run Streamlit UI
 make clean          # Clean generated files
+make seed           # Generate the first brand
 
 # Infrastructure (real adapters)
 make up             # Start Weaviate + MinIO services
