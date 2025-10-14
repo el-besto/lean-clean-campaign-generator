@@ -80,50 +80,58 @@ if use_real:
     st.subheader("🖼️ Upload Seed Images (Optional)")
 
     st.markdown("""
-    Upload brand asset images (product photos, lifestyle shots) to build your asset library.
-    The system will search these before generating new images.
+    **Drag and drop** product images here. The system will search these before generating new images.
     """)
 
-    col1, col2 = st.columns([2, 1])
+    seed_files = st.file_uploader(
+        "Drag and drop seed images here (or click to browse)",
+        type=["png", "jpg", "jpeg", "webp"],
+        accept_multiple_files=True,
+        help="Upload brand asset images - they'll be indexed for similarity search",
+        key="seed_uploader",
+    )
 
-    with col1:
-        seed_files = st.file_uploader(
-            "Select seed images",
-            type=["png", "jpg", "jpeg", "webp"],
-            accept_multiple_files=True,
-            help="Upload brand assets for this campaign",
-        )
+    # Auto-upload seeds when files are selected
+    if seed_files:
+        if "uploaded_seeds" not in st.session_state:
+            st.session_state["uploaded_seeds"] = set()
 
-    with col2:
-        seed_product = st.text_input(
-            "Product name for seeds",
-            value="Lavender Soap",
-            help="Which product are these seed images for?",
-        )
+        # Check which files are new
+        new_files = []
+        for f in seed_files:
+            file_key = f"{f.name}_{f.size}"
+            if file_key not in st.session_state["uploaded_seeds"]:
+                new_files.append(f)
+                st.session_state["uploaded_seeds"].add(file_key)
 
-    if seed_files and st.button("Upload Seeds", key="upload_seeds_btn"):
-        with st.spinner(f"Uploading {len(seed_files)} seed image(s)..."):
-            try:
-                result = upload_seed_assets(
-                    brand_id=brand_id,
-                    product_name=seed_product,
-                    uploaded_files=seed_files,
-                    use_real=use_real,
-                )
+        # Upload new files
+        if new_files:
+            with st.spinner(f"Uploading {len(new_files)} new seed(s)..."):
+                try:
+                    # Use first product name or "General"
+                    product_name = uploaded_brief.products[0].name if (uploaded_brief and uploaded_brief.products) else "Lavender Soap"
 
-                if "error" in result:
-                    st.error(result["error"])
-                else:
-                    st.success(f"✓ Uploaded {result['seed_count']} seed(s)")
+                    result = upload_seed_assets(
+                        brand_id=brand_id,
+                        product_name=product_name,
+                        uploaded_files=new_files,
+                        use_real=use_real,
+                    )
 
-                    # Show preview
-                    cols = st.columns(min(4, len(result["seeded"])))
-                    for idx, item in enumerate(result["seeded"]):
-                        with cols[idx % 4]:
-                            st.caption(f"{item['filename']}")
-                            st.caption(f"Palette: {', '.join(item['palette'][:2])}")
-            except Exception as e:
-                st.error(f"Upload failed: {e}")
+                    if "error" in result:
+                        st.error(result["error"])
+                    else:
+                        st.success(f"✓ Uploaded {result['seed_count']} seed(s) for {product_name}")
+                except Exception as e:
+                    st.error(f"Upload failed: {e}")
+
+        # Show preview of all selected images
+        st.write(f"**{len(seed_files)} seed image(s) selected**")
+        cols = st.columns(min(4, len(seed_files)))
+        for idx, upload in enumerate(seed_files):
+            with cols[idx % 4]:
+                image = Image.open(BytesIO(upload.getvalue()))
+                st.image(image, caption=upload.name, use_container_width=True)
 
     st.markdown("---")
 

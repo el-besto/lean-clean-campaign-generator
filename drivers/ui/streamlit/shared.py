@@ -109,11 +109,14 @@ def upload_seed_assets(
             brand_id=brand_id,
             brief_id="seed",
             product_name=product_name,
+            audience="",  # Seed assets don't have specific audience
             locale="en-US",
             aspect_ratio="unknown",  # Can detect from image dimensions if needed
             message="Seed asset",
             image_url=image_url,
-            validation_status="approved",
+            reused=False,  # This is a new upload
+            generated_at=datetime.now(),
+            meta={"tags": ["seed", "uploaded"]},
         )
 
         # Index in Weaviate with image bytes for vectorization
