@@ -23,8 +23,9 @@ st.markdown("""
 
 Use the sidebar to navigate between pages:
 
-1. **🎨 Generate Campaign** - Create localized campaign assets
-2. **🖼️ Gallery** - View all generated assets (MinIO storage)
+1. **🎨 Generate Campaign** - Complete workflow (upload brief, upload seeds, configure, generate)
+2. **📤 Upload Seeds** - Bulk upload seed images (optional - can also upload inline on Generate page)
+3. **🖼️ Gallery** - View all generated assets (MinIO storage)
 
 ### Adapter Modes
 
@@ -32,11 +33,19 @@ Use the sidebar to navigate between pages:
 - **Real Adapters**: OpenAI image generation, MinIO storage, Weaviate search
   - Requires: Docker services running + `OPENAI_API_KEY` set
 
-### Quick Start
+### Quick Start (Fake Mode)
+
+1. Navigate to "Generate Campaign"
+2. Click "Generate Campaign" (uses defaults)
+3. View 8 localized assets instantly
+
+### Quick Start (Real Mode)
 
 1. Start services: `make up`
 2. Set API key: `export OPENAI_API_KEY="sk-..."`
-3. Navigate to "Generate Campaign" and create!
+3. Navigate to "Generate Campaign", enable "Use real adapters"
+4. Optionally upload seeds first (or use Upload Seeds page)
+5. Generate!
 
 ---
 

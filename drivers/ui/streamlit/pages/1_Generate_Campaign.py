@@ -1,7 +1,11 @@
 """
 Page 1: Generate Campaign
 
-Interactive campaign brief form with real-time generation.
+Simple, single-page workflow for campaign generation:
+1. Upload brief (optional)
+2. Upload seed images (optional)
+3. Configure campaign
+4. Generate
 """
 import streamlit as st
 from datetime import datetime
@@ -18,105 +22,197 @@ from app.infrastructure.factories import (
     create_brand_repository,
     create_asset_repository,
 )
-from drivers.ui.streamlit.shared import parse_brief_file
+from drivers.ui.streamlit.shared import parse_brief_file, upload_seed_assets
 
 st.set_page_config(page_title="Generate Campaign", page_icon="🎨", layout="wide")
 
 st.header("🎨 Generate Campaign")
 
-# Sidebar: Campaign Brief Form
-st.sidebar.header("Campaign Brief")
+# ============================================================================
+# SECTION 1: CONFIGURATION
+# ============================================================================
+st.subheader("⚙️ Configuration")
 
-# File upload option
-st.sidebar.subheader("📁 Upload Brief (Optional)")
-brief_file = st.sidebar.file_uploader(
-    "Brief file (YAML/JSON)",
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    use_real = st.checkbox(
+        "Use real adapters (OpenAI + MinIO + Weaviate)",
+        value=False,
+        help="Requires Docker services running and OPENAI_API_KEY set",
+    )
+
+with col2:
+    brand_id = st.selectbox("Brand", ["natural-suds-co"])
+
+if use_real:
+    st.info("✓ Real adapters enabled. Ensure services are running: `make up`")
+else:
+    st.info("ℹ️ Using fake adapters (testing mode - no API keys needed)")
+
+st.markdown("---")
+
+# ============================================================================
+# SECTION 2: UPLOAD BRIEF (OPTIONAL)
+# ============================================================================
+st.subheader("📁 Upload Brief (Optional)")
+
+brief_file = st.file_uploader(
+    "Upload campaign brief (YAML or JSON)",
     type=["yaml", "yml", "json"],
-    help="Upload a campaign brief file to auto-populate the form below",
+    help="Auto-populate form below from file",
 )
 
 uploaded_brief = None
 if brief_file:
     try:
         uploaded_brief, _ = parse_brief_file(brief_file)
-        st.sidebar.success(f"✓ Loaded: {uploaded_brief.brief_id}")
+        st.success(f"✓ Loaded brief: {uploaded_brief.brief_id}")
     except Exception as e:
-        st.sidebar.error(f"Failed to parse brief: {e}")
+        st.error(f"Failed to parse brief: {e}")
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("✏️ Manual Entry")
+st.markdown("---")
 
-use_real = st.sidebar.checkbox(
-    "Use real adapters",
-    value=False,
-    help="Toggle between fake (testing) and real (OpenAI + MinIO + Weaviate) adapters",
-)
-
+# ============================================================================
+# SECTION 3: UPLOAD SEED IMAGES (OPTIONAL)
+# ============================================================================
 if use_real:
-    st.sidebar.info("⚠️ Real adapters enabled. Requires:\n- Docker services running\n- OPENAI_API_KEY set")
-else:
-    st.sidebar.info("ℹ️ Using fake adapters (testing mode)")
+    st.subheader("🖼️ Upload Seed Images (Optional)")
 
-brand_id = st.sidebar.selectbox(
-    "Brand",
-    ["natural-suds-co"],
-    index=0 if not uploaded_brief else 0
-)
-campaign_slogan = st.sidebar.text_input(
-    "Campaign Slogan",
-    value=uploaded_brief.campaign_slogan if uploaded_brief else "Gift Wellness"
-)
-target_region = st.sidebar.text_input(
-    "Target Region",
-    value=uploaded_brief.target_region if uploaded_brief else "North America"
-)
-target_audience = st.sidebar.text_input(
-    "Target Audience",
-    value=uploaded_brief.target_audience if uploaded_brief else "Gift shoppers 25-45"
-)
+    st.markdown("""
+    Upload brand asset images (product photos, lifestyle shots) to build your asset library.
+    The system will search these before generating new images.
+    """)
 
-st.sidebar.subheader("Locales")
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        seed_files = st.file_uploader(
+            "Select seed images",
+            type=["png", "jpg", "jpeg", "webp"],
+            accept_multiple_files=True,
+            help="Upload brand assets for this campaign",
+        )
+
+    with col2:
+        seed_product = st.text_input(
+            "Product name for seeds",
+            value="Lavender Soap",
+            help="Which product are these seed images for?",
+        )
+
+    if seed_files and st.button("Upload Seeds", key="upload_seeds_btn"):
+        with st.spinner(f"Uploading {len(seed_files)} seed image(s)..."):
+            try:
+                result = upload_seed_assets(
+                    brand_id=brand_id,
+                    product_name=seed_product,
+                    uploaded_files=seed_files,
+                    use_real=use_real,
+                )
+
+                if "error" in result:
+                    st.error(result["error"])
+                else:
+                    st.success(f"✓ Uploaded {result['seed_count']} seed(s)")
+
+                    # Show preview
+                    cols = st.columns(min(4, len(result["seeded"])))
+                    for idx, item in enumerate(result["seeded"]):
+                        with cols[idx % 4]:
+                            st.caption(f"{item['filename']}")
+                            st.caption(f"Palette: {', '.join(item['palette'][:2])}")
+            except Exception as e:
+                st.error(f"Upload failed: {e}")
+
+    st.markdown("---")
+
+# ============================================================================
+# SECTION 4: CAMPAIGN CONFIGURATION
+# ============================================================================
+st.subheader("📝 Campaign Configuration")
+
+# Basic info
+col1, col2 = st.columns(2)
+
+with col1:
+    campaign_slogan = st.text_input(
+        "Campaign Slogan",
+        value=uploaded_brief.campaign_slogan if uploaded_brief else "Gift Wellness",
+    )
+    target_region = st.text_input(
+        "Target Region",
+        value=uploaded_brief.target_region if uploaded_brief else "North America",
+    )
+
+with col2:
+    target_audience = st.text_input(
+        "Target Audience",
+        value=uploaded_brief.target_audience if uploaded_brief else "Gift shoppers 25-45",
+    )
+
+# Locales
+st.markdown("**Locales**")
+col1, col2, col3 = st.columns(3)
+
 default_locales = uploaded_brief.target_locales if uploaded_brief else ["en-US", "es-US"]
-locale_en = st.sidebar.checkbox("English (en-US)", value="en-US" in default_locales)
-locale_es = st.sidebar.checkbox("Spanish (es-US)", value="es-US" in default_locales)
+
+with col1:
+    locale_en = st.checkbox("English (en-US)", value="en-US" in default_locales)
+with col2:
+    locale_es = st.checkbox("Spanish (es-US)", value="es-US" in default_locales)
+
 locales = []
 if locale_en:
     locales.append("en-US")
 if locale_es:
     locales.append("es-US")
 
-st.sidebar.subheader("Products")
+# Products
+st.markdown("**Products**")
 default_products = uploaded_brief.products if uploaded_brief else []
-num_products = st.sidebar.number_input(
+num_products = st.number_input(
     "Number of Products",
     min_value=1,
     max_value=5,
-    value=len(default_products) if default_products else 2
+    value=len(default_products) if default_products else 2,
 )
+
 products = []
+cols = st.columns(int(num_products))
+
 for i in range(int(num_products)):
-    default_name = ""
-    if default_products and i < len(default_products):
-        default_name = default_products[i].name
-    elif i < 2:
-        default_name = ["Lavender Soap", "Citrus Shower Gel"][i]
-    else:
-        default_name = f"Product {i+1}"
+    with cols[i]:
+        default_name = ""
+        if default_products and i < len(default_products):
+            default_name = default_products[i].name
+        elif i < 2:
+            default_name = ["Lavender Soap", "Citrus Shower Gel"][i]
+        else:
+            default_name = f"Product {i+1}"
 
-    product_name = st.sidebar.text_input(
-        f"Product {i+1} Name",
-        value=default_name,
-        key=f"product_{i}",
-    )
-    if product_name:
-        palette = default_products[i].palette_words if (default_products and i < len(default_products)) else ["vibrant", "modern"]
-        products.append(Product(name=product_name, palette_words=palette))
+        product_name = st.text_input(
+            f"Product {i+1}",
+            value=default_name,
+            key=f"product_{i}",
+        )
+        if product_name:
+            palette = default_products[i].palette_words if (default_products and i < len(default_products)) else ["vibrant", "modern"]
+            products.append(Product(name=product_name, palette_words=palette))
 
-st.sidebar.subheader("Aspect Ratios")
+# Aspect Ratios
+st.markdown("**Aspect Ratios**")
+col1, col2, col3 = st.columns(3)
+
 default_aspects = uploaded_brief.aspects if uploaded_brief else ["1:1", "9:16"]
-aspect_1x1 = st.sidebar.checkbox("Square (1:1)", value="1:1" in default_aspects)
-aspect_9x16 = st.sidebar.checkbox("Story (9:16)", value="9:16" in default_aspects)
-aspect_16x9 = st.sidebar.checkbox("Landscape (16:9)", value="16:9" in default_aspects)
+
+with col1:
+    aspect_1x1 = st.checkbox("Square (1:1)", value="1:1" in default_aspects)
+with col2:
+    aspect_9x16 = st.checkbox("Story (9:16)", value="9:16" in default_aspects)
+with col3:
+    aspect_16x9 = st.checkbox("Landscape (16:9)", value="16:9" in default_aspects)
+
 aspects = []
 if aspect_1x1:
     aspects.append("1:1")
@@ -125,8 +221,12 @@ if aspect_9x16:
 if aspect_16x9:
     aspects.append("16:9")
 
-# Main: Generate Campaign
-if st.sidebar.button("Generate Campaign", type="primary"):
+st.markdown("---")
+
+# ============================================================================
+# SECTION 5: GENERATE
+# ============================================================================
+if st.button("🚀 Generate Campaign", type="primary", use_container_width=True):
     if not locales or not products or not aspects:
         st.error("Please select at least one locale, product, and aspect ratio.")
     else:
@@ -161,13 +261,18 @@ if st.sidebar.button("Generate Campaign", type="primary"):
         st.session_state["result"] = result
         st.session_state["use_real"] = use_real
 
-# Display Results
+st.markdown("---")
+
+# ============================================================================
+# SECTION 6: RESULTS
+# ============================================================================
 if "result" in st.session_state:
     result = st.session_state["result"]
     use_real_for_display = st.session_state.get("use_real", False)
 
+    st.header("📊 Campaign Results")
+
     # Summary
-    st.header("Campaign Summary")
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Assets", result["summary"]["total_assets"])
     col2.metric("Products", result["summary"]["products"])
@@ -207,6 +312,10 @@ if "result" in st.session_state:
                         st.markdown(f"**{asset.aspect_ratio}**")
                         st.markdown(f"*{asset.message}*")
 
+                        # Show reused flag
+                        if hasattr(asset, 'reused') and asset.reused:
+                            st.caption("♻️ Reused from asset library")
+
                         # Display image if using real adapters
                         if use_real_for_display:
                             try:
@@ -232,12 +341,11 @@ if "result" in st.session_state:
             "generated_at": result["generated_at"],
         })
 else:
-    st.info("👈 Configure your campaign in the sidebar and click **Generate Campaign** to get started")
+    st.info("""
+    👆 Configure your campaign above and click **Generate Campaign** to get started.
 
-    st.subheader("🎯 Quick Demo")
-    st.markdown("""
-    1. Keep default settings in sidebar
-    2. Click **Generate Campaign**
+    **Quick Start:**
+    1. Keep default settings (fake adapters)
+    2. Click "Generate Campaign"
     3. View 8 localized assets (2 products × 2 locales × 2 aspects)
-    4. See Spanish localization: "Regalo Bienestar"
     """)
