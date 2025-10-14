@@ -41,7 +41,6 @@ class OpenAIImageAdapter:
             model="gpt-image-1",
             prompt=prompt,
             size=size,
-            quality="standard",
             n=1,
         )
 
