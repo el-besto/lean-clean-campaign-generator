@@ -60,43 +60,44 @@ def test_localized_campaign_generation():
     )
 
     # GIVEN: Dependencies (fake adapters)
-    # TODO: Create fake adapters
-    # ai_adapter = FakeAIAdapter()
-    # storage_adapter = FakeStorageAdapter()
-    # brand_repo = InMemoryBrandRepository()
+    from app.adapters.ai.fake import FakeAIAdapter
+    from app.adapters.storage.fake import FakeStorageAdapter
+    from app.infrastructure.repositories.brand.in_memory import InMemoryBrandRepository
+    from app.use_cases.generate_campaign_uc import GenerateCampaignUC
+    from app.use_cases.validate_campaign_uc import ValidateCampaignUC
+    from app.interface_adapters.orchestrators.campaign_orchestrator import CampaignOrchestrator
+
+    ai_adapter = FakeAIAdapter()
+    storage_adapter = FakeStorageAdapter()
+    brand_repo = InMemoryBrandRepository()
 
     # WHEN: Generate campaign
-    # TODO: Create use case
-    # use_case = GenerateCampaignUC(
-    #     ai_adapter=ai_adapter,
-    #     storage_adapter=storage_adapter,
-    # )
-    # orchestrator = CampaignOrchestrator(generate_uc, validate_uc, brand_repo)
-    # result = orchestrator.generate_campaign(brief)
-    # assets = result["assets"]
+    generate_uc = GenerateCampaignUC(
+        ai_adapter=ai_adapter,
+        storage_adapter=storage_adapter,
+    )
+    validate_uc = ValidateCampaignUC()
+    orchestrator = CampaignOrchestrator(generate_uc, validate_uc, brand_repo)
+    result = orchestrator.generate_campaign(brief)
+    assets = result["assets"]
 
     # THEN: 12 assets generated (2 products × 3 aspects × 2 locales)
-    # assert len(assets) == 12
-    # assert result["summary"]["total_assets"] == 12
+    assert len(assets) == 12
+    assert result["summary"]["total_assets"] == 12
 
     # THEN: Assets organized correctly
-    # lavender_assets = [a for a in assets if a.product_name == "Lavender Soap"]
-    # assert len(lavender_assets) == 6  # 3 aspects × 2 locales
+    lavender_assets = [a for a in assets if a.product_name == "Lavender Soap"]
+    assert len(lavender_assets) == 6  # 3 aspects × 2 locales
 
     # THEN: Localized messages
-    # en_assets = [a for a in assets if a.locale == "en-US"]
-    # es_assets = [a for a in assets if a.locale == "es-US"]
-    # assert len(en_assets) == 6
-    # assert len(es_assets) == 6
-    # assert any("Regalo Bienestar" in a.message for a in es_assets)
+    en_assets = [a for a in assets if a.locale == "en-US"]
+    es_assets = [a for a in assets if a.locale == "es-US"]
+    assert len(en_assets) == 6
+    assert len(es_assets) == 6
+    assert any("Regalo Bienestar" in a.message for a in es_assets)
 
     # THEN: All assets validated
-    # assert result["summary"]["validation_failed"] == 0
-
-    # For now, test just validates entity instantiation
-    assert brief.validate()
-    assert brand.validate()
-    assert brief.total_assets_required == 12
+    assert result["summary"]["validation_failed"] == 0
 
 
 if __name__ == "__main__":
