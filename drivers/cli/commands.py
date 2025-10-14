@@ -9,13 +9,15 @@ from pathlib import Path
 from datetime import datetime
 
 from app.entities.campaign_brief import CampaignBrief, Product
-from app.adapters.ai.fake import FakeAIAdapter
-from app.adapters.storage.fake import FakeStorageAdapter
-from app.infrastructure.repositories.brand.in_memory import InMemoryBrandRepository
 from app.use_cases.generate_campaign_uc import GenerateCampaignUC
 from app.use_cases.validate_campaign_uc import ValidateCampaignUC
 from app.interface_adapters.orchestrators.campaign_orchestrator import CampaignOrchestrator
 from app.interface_adapters.presenters.campaign_presenter import CampaignPresenter
+from app.infrastructure.factories import (
+    create_ai_adapter,
+    create_storage_adapter,
+    create_brand_repository,
+)
 
 app = typer.Typer(
     name="campaign-generator",
@@ -23,11 +25,20 @@ app = typer.Typer(
 )
 
 
-def build_orchestrator() -> CampaignOrchestrator:
-    """Build orchestrator with fake adapters (dependency injection)."""
-    ai_adapter = FakeAIAdapter()
-    storage_adapter = FakeStorageAdapter()
-    brand_repo = InMemoryBrandRepository()
+def build_orchestrator(use_real: bool = False) -> CampaignOrchestrator:
+    """
+    Build orchestrator with specified adapter implementations.
+
+    Args:
+        use_real: If True, use real adapters (OpenAI, MinIO, Weaviate);
+                  else use fake adapters (for testing)
+
+    Returns:
+        CampaignOrchestrator with injected dependencies
+    """
+    ai_adapter = create_ai_adapter(use_real=use_real)
+    storage_adapter = create_storage_adapter(use_real=use_real)
+    brand_repo = create_brand_repository(use_real=use_real)
 
     generate_uc = GenerateCampaignUC(ai_adapter, storage_adapter)
     validate_uc = ValidateCampaignUC()
@@ -58,6 +69,11 @@ def generate(
         help="Aspect ratios (repeat for multiple)",
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed output"),
+    real: bool = typer.Option(
+        False,
+        "--real",
+        help="Use real adapters (OpenAI, MinIO, Weaviate). Requires: docker services running + OPENAI_API_KEY set",
+    ),
 ):
     """
     Generate localized campaign creative assets.
@@ -70,8 +86,15 @@ def generate(
             --product "Citrus Gel" \\
             --locale en-US --locale es-US \\
             --aspect 1:1 --aspect 9:16
+
+        # With real adapters:
+        campaign-generator generate --real \\
+            --brand natural-suds-co \\
+            --slogan "Gift Wellness"
     """
-    typer.echo("🚀 Campaign Generator - Pragmatic Clean Architecture Demo\n")
+    adapter_mode = "real (OpenAI + MinIO + Weaviate)" if real else "fake (testing mode)"
+    typer.echo("🚀 Campaign Generator - Pragmatic Clean Architecture Demo")
+    typer.echo(f"   Adapter mode: {adapter_mode}\n")
 
     # Build campaign brief
     brief = CampaignBrief(
@@ -96,7 +119,7 @@ def generate(
 
     # Generate campaign
     typer.echo("⚙️  Generating campaign...")
-    orchestrator = build_orchestrator()
+    orchestrator = build_orchestrator(use_real=real)
 
     try:
         result = orchestrator.generate_campaign(brief)
@@ -114,7 +137,10 @@ def generate(
             typer.echo(validation_report)
 
         typer.echo("\n✅ Campaign generation complete!")
-        typer.echo(f"💾 Assets stored in memory (using FakeStorageAdapter)")
+        if real:
+            typer.echo(f"💾 Assets stored in MinIO (S3-compatible storage)")
+        else:
+            typer.echo(f"💾 Assets stored in memory (using FakeStorageAdapter)")
 
     except Exception as e:
         typer.echo(f"\n❌ Error: {e}", err=True)

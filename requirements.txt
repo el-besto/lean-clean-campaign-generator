@@ -2,3 +2,10 @@ pyyaml>=6.0
 typer>=0.12.0
 streamlit>=1.35.0
 pytest>=8.2.0
+# Real adapter dependencies
+openai>=2.2.0
+weaviate-client>=4.16.7
+boto3>=1.40.49
+Pillow>=11.3.0
+python-dotenv>=1.1.1
+colorthief>=0.2.1

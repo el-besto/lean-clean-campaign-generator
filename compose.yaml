@@ -1,0 +1,77 @@
+services:
+  weaviate:
+    container_name: campaign-weaviate
+    image: cr.weaviate.io/semitechnologies/weaviate:1.33.0
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+    ports:
+      - "8080:8080"
+      - "50051:50051"   # gRPC port for Python client v4
+    restart: on-failure:0
+    environment:
+      QUERY_DEFAULTS_LIMIT: "25"
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+      ENABLE_MODULES: "multi2vec-clip,text2vec-transformers"
+      CLUSTER_HOSTNAME: "node1"
+      CLIP_INFERENCE_API: "http://multi2vec-clip:8080"
+      TRANSFORMERS_INFERENCE_API: "http://text2vec-transformers:8080"
+    depends_on:
+      - multi2vec-clip
+      - text2vec-transformers
+    volumes:
+      - weaviate-data:/var/lib/weaviate
+
+  multi2vec-clip:
+    container_name: campaign-clip-vectorizer
+    image: cr.weaviate.io/semitechnologies/multi2vec-clip:sentence-transformers-clip-ViT-B-32-multilingual-v1
+    environment:
+      ENABLE_CUDA: "0"
+    ports:
+      - "8085:8080"
+    restart: unless-stopped
+
+  text2vec-transformers:
+    container_name: campaign-text-vectorizer
+    image: cr.weaviate.io/semitechnologies/transformers-inference:sentence-transformers-multi-qa-MiniLM-L6-cos-v1
+    environment:
+      ENABLE_CUDA: "0"
+    ports:
+      - "8086:8080"
+    restart: unless-stopped
+
+  minio:
+    container_name: campaign-minio
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  # Optional: Phoenix for observability (commented out to reduce complexity)
+  # phoenix:
+  #   container_name: campaign-phoenix
+  #   image: arizephoenix/phoenix:latest
+  #   environment:
+  #     - PHOENIX_WORKING_DIR=/mnt/data
+  #   ports:
+  #     - "6006:6006"
+  #     - "4317:4317"
+  #   volumes:
+  #     - phoenix-data:/mnt/data
+  #   restart: unless-stopped
+
+volumes:
+  weaviate-data:
+  minio-data:
+  # phoenix-data:

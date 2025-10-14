@@ -41,6 +41,8 @@ class CampaignOrchestrator:
         Returns:
             Dict with assets, validation results, and summary
         """
+        from datetime import datetime
+
         # Step 1: Load brand
         brand = self.brand_repository.get_by_id(brief.brand_id)
         if not brand:
@@ -56,15 +58,24 @@ class CampaignOrchestrator:
         validation_failed = sum(1 for r in validation_results if not r.is_valid)
         validation_passed = len(validation_results) - validation_failed
 
+        # Calculate unique counts from generated assets
+        unique_products = len(set(a.product_name for a in assets))
+        unique_locales = len(set(a.locale for a in assets))
+        unique_aspects = len(set(a.aspect_ratio for a in assets))
+
         return {
             "success": True,
+            "brief_id": brief.brief_id,
+            "brand_id": brief.brand_id,
+            "generated_at": datetime.now().isoformat(),
             "assets": assets,
             "validation_results": validation_results,
             "summary": {
                 "total_assets": len(assets),
+                "products": unique_products,
+                "locales": unique_locales,
+                "aspects": unique_aspects,
                 "validation_passed": validation_passed,
                 "validation_failed": validation_failed,
-                "brief_id": brief.brief_id,
-                "brand_id": brief.brand_id,
             },
         }
