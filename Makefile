@@ -15,13 +15,13 @@ test-features:  ## Run feature tests only
 	.venv/bin/pytest tests/features/ -v -m acceptance
 
 demo:  ## Run CLI demo
-	.venv/bin/python -m drivers.cli.commands demo
+	PYTHONPATH=. .venv/bin/python -m drivers.cli.commands demo
 
 cli:  ## Run CLI (use: make cli ARGS="generate --help")
-	.venv/bin/python -m drivers.cli.commands $(ARGS)
+	PYTHONPATH=. .venv/bin/python -m drivers.cli.commands $(ARGS)
 
 ui:  ## Run Streamlit UI
-	.venv/bin/streamlit run drivers/ui/streamlit/app.py
+	PYTHONPATH=. .venv/bin/streamlit run drivers/ui/streamlit/app.py
 
 clean:  ## Clean generated files
 	rm -rf .pytest_cache
