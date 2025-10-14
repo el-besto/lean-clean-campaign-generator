@@ -20,8 +20,8 @@ class OpenAIImageAdapter:
         self.client = OpenAI(api_key=api_key or settings.OPENAI_API_KEY)
         self._aspect_to_size_map = {
             "1:1": "1024x1024",
-            "16:9": "1792x1024",
-            "9:16": "1024x1792",
+            "16:9": "1536x1024",
+            "9:16": "1024x1536",
         }
 
     def generate_image(self, prompt: str, aspect_ratio: str) -> bytes:

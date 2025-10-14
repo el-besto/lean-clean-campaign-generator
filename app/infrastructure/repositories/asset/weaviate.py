@@ -6,6 +6,7 @@ Uses multi2vec-clip for image vectorization and similarity search.
 """
 import base64
 from typing import Optional, List
+from datetime import datetime
 import weaviate
 from weaviate.classes.config import Property, DataType, Configure
 from weaviate.classes.query import Filter
@@ -37,7 +38,8 @@ class WeaviateAssetRepository:
         self.client.collections.create(
             name=COLLECTION_NAME,
             description="Seed assets and generated campaign creatives",
-            vectorizer_config=Configure.Vectorizer.multi2vec_clip(
+            vector_config=Configure.NamedVectors.multi2vec_clip(
+                name="clip_vector",
                 image_fields=["image"],
                 text_fields=[
                     "message",
@@ -138,11 +140,14 @@ class WeaviateAssetRepository:
                     brand_id=props.get("brand_id", ""),
                     brief_id="",
                     product_name=props.get("product_name", ""),
+                    audience="",  # Not stored for seeds
                     locale=props.get("locale", "en-US"),
                     aspect_ratio=props.get("aspect_ratio", "1:1"),
                     message=props.get("message", ""),
                     image_url=props.get("image_url", ""),
-                    validation_status="approved",  # Assume seeds are approved
+                    reused=True,  # These are existing assets
+                    generated_at=datetime.now(),  # Placeholder
+                    meta={},
                 )
             )
 
