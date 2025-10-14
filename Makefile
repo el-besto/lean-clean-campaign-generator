@@ -4,7 +4,7 @@ COMPOSE := docker compose
 WEAVIATE_HOST := 127.0.0.1
 WEAVIATE_HTTP_PORT := 8080
 
-.PHONY: help install test test-features clean demo cli ui up down clean-infra readiness open
+.PHONY: help install test test-features clean demo cli ui seed up down clean-infra readiness open
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -33,6 +33,9 @@ clean:  ## Clean generated files
 	rm -rf .pytest_cache
 	rm -rf out/assets/*
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+
+seed:  ## Seed brand data to Weaviate (run after 'make up')
+	cd "$(shell pwd)" && export PYTHONPATH=. && .venv/bin/python tools/seed_brand.py
 
 # -------- Docker Services --------
 up:  ## Start Weaviate + MinIO services

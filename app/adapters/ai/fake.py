@@ -31,11 +31,12 @@ class FakeAIAdapter:
             },
         }
 
-    def generate_image(self, prompt: str, aspect_ratio: str) -> bytes:
-        """Generate placeholder image (1x1 PNG)."""
+    def generate_image(self, prompt: str, aspect_ratio: str, seed_image: bytes = None) -> bytes:
+        """Generate placeholder image (1x1 PNG), optionally based on seed."""
         self.call_count += 1
         # Return minimal valid PNG (1x1 transparent pixel)
-        # In real implementation, would call OpenAI DALL-E 3
+        # In real implementation, would call OpenAI DALL-E 3 or variation API
+        # Note: seed_image ignored in fake implementation
         return self._create_placeholder_png(aspect_ratio)
 
     def overlay_text(self, image: bytes, text: str, aspect_ratio: str) -> bytes:

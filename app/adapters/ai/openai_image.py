@@ -24,25 +24,56 @@ class OpenAIImageAdapter:
             "9:16": "1024x1536",
         }
 
-    def generate_image(self, prompt: str, aspect_ratio: str) -> bytes:
+    def generate_image(self, prompt: str, aspect_ratio: str, seed_image: bytes = None) -> bytes:
         """
-        Generate hero image from text prompt via OpenAI.
+        Generate hero image from text prompt via OpenAI, optionally based on seed image.
 
         Args:
             prompt: Image generation prompt (product + brand guidelines)
             aspect_ratio: "1:1", "9:16", or "16:9"
+            seed_image: Optional seed image bytes to create variations from
 
         Returns:
             Image bytes (PNG format)
         """
         size = self._aspect_to_size_map.get(aspect_ratio, "1024x1024")
 
-        response = self.client.images.generate(
-            model="gpt-image-1",
-            prompt=prompt,
-            size=size,
-            n=1,
-        )
+        # If seed image provided, use it as base for generation (edit with full replacement)
+        if seed_image:
+            # Prepare seed image: resize to target size, ensure PNG format
+            img = Image.open(BytesIO(seed_image)).convert("RGBA")
+
+            # Parse size dimensions
+            width, height = map(int, size.split('x'))
+            img = img.resize((width, height), Image.Resampling.LANCZOS)
+
+            # Convert to bytes for API
+            img_buffer = BytesIO()
+            img.save(img_buffer, format="PNG")
+            img_buffer.seek(0)
+
+            # Create mask (fully transparent = regenerate everything with prompt influence)
+            mask = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+            mask_buffer = BytesIO()
+            mask.save(mask_buffer, format="PNG")
+            mask_buffer.seek(0)
+
+            # Use edit API to generate based on seed + prompt
+            response = self.client.images.edit(
+                image=img_buffer,
+                mask=mask_buffer,
+                prompt=prompt,
+                size=size,
+                n=1,
+            )
+        else:
+            # No seed image: standard text-to-image generation
+            response = self.client.images.generate(
+                model="gpt-image-1",
+                prompt=prompt,
+                size=size,
+                n=1,
+            )
 
         # Decode base64 image (b64_json is returned by default)
         image_b64 = response.data[0].b64_json

@@ -27,10 +27,12 @@ class GenerateCampaignUC:
         ai_adapter,
         storage_adapter,
         asset_repository=None,
+        progress_callback=None,
     ):
         self.ai_adapter = ai_adapter
         self.storage_adapter = storage_adapter
         self.asset_repository = asset_repository  # Optional: Weaviate asset search
+        self.progress_callback = progress_callback  # Optional: progress reporting
 
     def execute(
         self,
@@ -48,14 +50,26 @@ class GenerateCampaignUC:
             List of CreativeAsset entities
         """
         assets = []
+        total_assets = len(brief.products) * len(brief.aspects) * len(brief.target_locales)
+        current_asset = 0
 
         # Step 1: Localize campaign slogan for each locale
+        if self.progress_callback:
+            self.progress_callback("Localizing campaign slogans...", 0, total_assets)
         localized_slogans = self._localize_slogans(brief, brand)
 
         # Step 2: Generate assets for each combination
         for product in brief.products:
             for aspect in brief.aspects:
                 for locale in brief.target_locales:
+                    current_asset += 1
+                    if self.progress_callback:
+                        self.progress_callback(
+                            f"Generating: {product.name} | {aspect} | {locale}",
+                            current_asset,
+                            total_assets
+                        )
+
                     asset = self._generate_asset(
                         brief=brief,
                         brand=brand,
@@ -113,8 +127,27 @@ class GenerateCampaignUC:
         # Step 2: No existing asset found - generate new one
         prompt = self._create_prompt(brand, product, aspect)
 
-        # Generate hero image
-        image_bytes = self.ai_adapter.generate_image(prompt, aspect)
+        # Check for seed images to use as base
+        seed_image_bytes = None
+        if self.asset_repository:
+            seeds = self.asset_repository.find_seeds(
+                brand_id=brand.brand_id,
+                product_name=product.name,
+                limit=1
+            )
+            if seeds:
+                # Load seed image from storage
+                try:
+                    seed_asset = seeds[0]
+                    if hasattr(seed_asset, 'properties') and 'image' in seed_asset.properties:
+                        # Weaviate stores base64-encoded image
+                        import base64
+                        seed_image_bytes = base64.b64decode(seed_asset.properties['image'])
+                except Exception:
+                    pass  # If seed loading fails, continue with text-to-image
+
+        # Generate hero image (from seed if available, otherwise from prompt)
+        image_bytes = self.ai_adapter.generate_image(prompt, aspect, seed_image=seed_image_bytes)
 
         # Add text overlay
         final_image = self.ai_adapter.overlay_text(image_bytes, slogan, aspect)
