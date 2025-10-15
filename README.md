@@ -46,6 +46,20 @@ This presentation covers:
 
 ---
 
+## 📝 Blog: The Secret Sauce
+
+**Want to understand WHY this architecture enables rapid PoC development?**
+
+Read: [The Secret Sauce: Outside-In with All Stakeholders](https://github.com/el-besto/lean-clean-methodology/blob/main/blog/lean-clean-the-secret-sauce.md)
+
+This deep-dive explains:
+- How multi-stakeholder workshops prevent costly rework
+- Why edge cases are easier with this approach (not harder)
+- The three-layer integration testing strategy (Acceptance → Adapters → E2E)
+- Real-world timeline comparison (5 days vs 6-8 weeks)
+
+---
+
 ## 📦 Quick Start
 
 ### Prerequisites
