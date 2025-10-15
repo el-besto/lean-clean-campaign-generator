@@ -32,6 +32,9 @@ htmlcov/
 # Generated assets
 out/assets/**/*.png
 out/assets/**/*.jpg
+docs/presentation-*.pptx
+docs/presentation-*.html
+docs/presentation-*.txt
 
 # Config with secrets (if any)
 .env
