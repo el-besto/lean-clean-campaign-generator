@@ -11,7 +11,7 @@
 
 ## 🎯 Overview
 
-This PoC generates **localized creative assets** for social ad campaigns across multiple products, locales, and aspect ratios. Built with **Pragmatic Clean Architecture**, it demonstrates:
+This PoC generates **localized creative assets** for social ad campaigns across multiple products, locales, and aspect ratios. Built with [**Pragmatic Lean-Clean Architecture**][lean-clean-pca], it demonstrates:
 
 - ✅ **Clean separation of concerns** (5 architectural layers)
 - ✅ **Dependency Inversion Principle** (use cases depend on interfaces, not implementations)
@@ -25,6 +25,24 @@ This PoC generates **localized creative assets** for social ad campaigns across 
 - **Validation**: Built-in legal compliance checks (prohibited words)
 - **Two interfaces**: CLI (Typer) + Web UI (Streamlit)
 - **Fast testing**: Uses fake adapters (no API keys required, <100ms execution)
+
+[lean-clean-pca]: https://github.com/el-besto/lean-clean-methodology/blob/main/docs/framework-folder-structures.md#1-pragmatic-ca-the-sweet-spot
+
+---
+
+## 📊 Presentation
+
+**[View the 30-minute FDE interview presentation →](presentation/presentation-fde.md)**
+
+This presentation covers:
+
+- **Lean-Clean Methodology**: Why Outside-In development with stakeholders ([read more](https://github.com/el-besto/lean-clean-methodology))
+- **Architecture Deep-Dive**: Pragmatic Clean Architecture decisions
+- **Testing Strategy**: Three-layer testing pyramid (Acceptance → Integration → E2E)
+- **Design Trade-offs**: Key decisions with pros/cons
+- **Agentic System Design**: AI-driven monitoring and alerts (Task 3)
+
+📄 [PDF version](presentation/presentation-fde.pdf)
 
 ---
 
@@ -219,6 +237,8 @@ make ui
 - Easy to swap fakes for real implementations (OpenAI, MinIO, Weaviate, etc.)
 - Business logic (use cases) remains pure and testable
 
+> **Learn more:** [Pragmatic Clean Architecture patterns →](https://github.com/el-besto/lean-clean-methodology/blob/main/docs/framework-folder-structures.md)
+
 ### Project Structure
 
 ```
@@ -268,9 +288,12 @@ make test-features
 ### Testing Strategy
 
 - **One feature-level acceptance test** validates complete workflow
+- **One use-case test** for demonstration
 - **Uses ONLY fake adapters** (no external dependencies)
 - **Fast execution** (<100ms)
 - **Outside-In TDD**: Test written first, implementation driven by test
+
+> **Learn more:** [Outside-In testing with stakeholders →](https://github.com/el-besto/lean-clean-methodology/blob/main/docs/lean-clean-axioms.md#axiom-7-fakes-in-production-code)
 
 ---
 
@@ -347,6 +370,8 @@ make open           # Open service UIs in browser
 - **Presenter Pattern**: Formats results for different outputs
 - **Repository Pattern**: Brand persistence abstraction
 - **Protocol/Interface Segregation**: Python protocols define contracts
+
+> **Learn more:** [Lean-Clean architectural principles →](https://github.com/el-besto/lean-clean-methodology/blob/main/docs/lean-clean-axioms.md)
 
 ---
 
